@@ -52,7 +52,6 @@
 float angle		  = 0;
 long  count_wheel = 0;
 
-#define MAX_LEDS 120
 #define MAXHUE	 360
 #define REQUIRED VERSION(1, 5, 0)
 // #define RELAY
@@ -80,8 +79,6 @@ void addSwitch();
 
 // clang-format off
 CUSTOM_CHAR(Selector, 00000001-0001-0001-0001-46637266EA00, PR + PW + EV, UINT8, 1, 1, 3, false); // create Custom Characteristic to "select" special effects via Eve App
-CUSTOM_CHAR(NumLeds, 00000002-0001-0001-0001-46637266EA00, PR + PW + EV, UINT8, 90, 1, MAX_LEDS, false);
-CUSTOM_CHAR(RelayEnabled, 00000003-0001-0001-0001-46637266EA00, PR + PW + EV, BOOL, false, false, false, false);
 // clang-format on
 
 // declare function
@@ -105,13 +102,11 @@ struct Pixel_Strand : Service::LightBulb { // Addressable RGBW Pixel Strand of n
 		virtual int		 requiredBuffer() { return (0); }
 	};
 
-	Characteristic::On			 power{0, true};
-	Characteristic::Hue			 H{0, true};
-	Characteristic::Saturation	 S{100, true};
-	Characteristic::Brightness	 V{100, true};
-	Characteristic::Selector	 effect{1, true};
-	Characteristic::NumLeds		 num_leds{90, true};
-	Characteristic::RelayEnabled relay_enabled{false, true};
+	Characteristic::On		   power{0, true};
+	Characteristic::Hue		   H{0, true};
+	Characteristic::Saturation S{100, true};
+	Characteristic::Brightness V{100, true};
+	Characteristic::Selector   effect{1, true};
 
 	vector<SpecialEffect *> Effects;
 
@@ -120,9 +115,10 @@ struct Pixel_Strand : Service::LightBulb { // Addressable RGBW Pixel Strand of n
 	Pixel::Color *colors;
 	uint32_t	  alarmTime;
 
-	Pixel_Strand(int pin) : Service::LightBulb() {
+	Pixel_Strand(int pin, int nPixels) : Service::LightBulb() {
 
-		pixel = new Pixel(pin, false); // creates RGBW pixel LED on specified pin using default timing parameters suitable for most SK68xx LEDs
+		pixel		  = new Pixel(pin, false); // creates RGBW pixel LED on specified pin using default timing parameters suitable for most SK68xx LEDs
+		this->nPixels = nPixels;			   // store number of Pixels in Strand
 
 		Effects.push_back(new ManualControl(this));
 		Effects.push_back(new Rainbow(this));
@@ -132,15 +128,7 @@ struct Pixel_Strand : Service::LightBulb { // Addressable RGBW Pixel Strand of n
 		effect.setDescription("Color Effect");
 		effect.setRange(1, Effects.size(), 1);
 
-		num_leds.setUnit(""); // configures custom "Selector" characteristic for use with Eve HomeKit
-		num_leds.setDescription("Number of LEDs");
-		num_leds.setRange(1, MAX_LEDS, 1);
-
-		relay_enabled.setDescription("Relay Enabled");
-
 		V.setRange(5, 100, 1); // sets the range of the Brightness to be from a min of 5%, to a max of 100%, in steps of 1%
-
-		this->nPixels = num_leds.getNewVal(); // store number of Pixels in Strand
 
 		int bufSize = 0;
 
@@ -149,7 +137,7 @@ struct Pixel_Strand : Service::LightBulb { // Addressable RGBW Pixel Strand of n
 
 		colors = (Pixel::Color *)calloc(bufSize, sizeof(Pixel::Color)); // storage for dynamic pixel pattern
 
-		Serial.printf("\nConfigured Pixel_Strand on pin %d with %d pixels and %d effects.  Color buffer = %d pixels\n\n", pin, this->nPixels, Effects.size(), bufSize);
+		Serial.printf("\nConfigured Pixel_Strand on pin %d with %d pixels and %d effects.  Color buffer = %d pixels\n\n", pin, nPixels, Effects.size(), bufSize);
 
 		update();
 	}
@@ -163,17 +151,6 @@ struct Pixel_Strand : Service::LightBulb { // Addressable RGBW Pixel Strand of n
 			alarmTime = millis() + Effects[effect.getNewVal() - 1]->update();
 			if (effect.updated())
 				Serial.printf("Effect changed to: %s\n", Effects[effect.getNewVal() - 1]->name);
-		}
-		if (relay_enabled.getNewVal()) {
-			LOG0("Relay Enabled\n");
-			// addSwitch();
-			// homeSpan.updateDatabase();
-			LOG0("Accessories Database updated.  New configuration number broadcasted...\n");
-		} else {
-			LOG0("Relay Disabled\n");
-			// homeSpan.deleteAccessory(2);
-			// homeSpan.updateDatabase();
-			LOG0("Nothing to update - no changes were made!\n");
 		}
 
 		return (true);
@@ -290,31 +267,23 @@ void setup() {
 	homeSpan.reserveSocketConnections(5); // reserve 5 socket connections for Web Server
 	homeSpan.setControlPin(0);			  // set the control pin to GPIO0
 	homeSpan.setPortNum(81);			  // set the port number to 81
-	homeSpan.enableAutoStartAP();		  // enable auto start of AP
+	// homeSpan.enableAutoStartAP();		  // enable auto start of AP
 
-	homeSpan.begin(Category::Lighting, "Holiday Lights");
+	homeSpan.begin(Category::Lighting, "SOLVINDEN");
 
 	new SpanAccessory(1);
 	new Service::AccessoryInformation();
-	new Characteristic::Name("Holiday Lights");
+	new Characteristic::Name("SOLVINDEN");
 	new Characteristic::Manufacturer("HomeSpan");
 	new Characteristic::SerialNumber("123-ABC");
 	new Characteristic::Model("NeoPixel RGB LEDs");
-	new Characteristic::FirmwareRevision("1.1");
+	new Characteristic::FirmwareRevision("1.0");
 	new Characteristic::Identify();
 
 	new Service::HAPProtocolInformation();
 	new Characteristic::Version("1.1.0");
 
-	new Pixel_Strand(NEOPIXEL_RGBW_PIN);
-
-#ifdef RELAY
-	new SpanAccessory();
-	new Service::AccessoryInformation();
-	new Characteristic::Name("Switch");
-	new Characteristic::Identify();
-	new DEV_Switch(18);
-#endif
+	new Pixel_Strand(NEOPIXEL_RGBW_PIN, 9);
 }
 
 ///////////////////////////////
@@ -338,14 +307,3 @@ void setupWeb() {
 	server.begin();
 	LOG1("HTTP server started");
 } // setupWeb
-
-void addSwitch() {
-
-	LOG0("Adding Accessory: Switch\n");
-
-	new SpanAccessory(2);
-	new Service::AccessoryInformation();
-	new Characteristic::Name("Switch");
-	new Characteristic::Identify();
-	new DEV_Switch(18);
-}
