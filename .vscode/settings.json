@@ -47,7 +47,9 @@
         "regex": "cpp",
         "valarray": "cpp",
         "cstddef": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "ios": "cpp",
+        "*.tcc": "cpp"
     },
     "VsCodeTaskButtons.tasks": [
         {
