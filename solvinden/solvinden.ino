@@ -52,7 +52,7 @@
 float angle = 0;
 
 #define REQUIRED VERSION(1, 5, 0) // Required HomeSpan version
-#define RGBW	 true			  // true = RGBW, false = RGB
+#define RGBW	 false			  // true = RGBW, false = RGB
 
 #include "HomeSpan.h"
 #include "extras/Pixel.h"
@@ -84,6 +84,8 @@ CUSTOM_CHAR(RainbowEnabled, 00000001-0001-0001-0001-46637266EA00, PR + PW + EV, 
 // clang-format on
 
 AsyncWebServer server(80);
+
+char sNumber[18] = "11:11:11:11:11:11";
 
 struct Pixel_Strand : Service::LightBulb { // Addressable RGBW Pixel Strand of nPixel Pixels
 
@@ -252,6 +254,12 @@ void setup() {
 
 	Serial.begin(115200);
 
+	for (int i = 0; i < 17; ++i) // we will iterate through each character in WiFi.macAddress() and copy it to the global char sNumber[]
+	{
+		sNumber[i] = WiFi.macAddress()[i];
+	}
+	sNumber[17] = '\0'; // the last charater needs to be a null
+
 	homeSpan.setSketchVersion("1.0.0");	  // set sketch version
 	homeSpan.setLogLevel(0);			  // set log level to 0 (no logs)
 	homeSpan.setStatusPin(32);			  // set the status pin to GPIO32
@@ -268,8 +276,8 @@ void setup() {
 	new Service::AccessoryInformation();
 	new Characteristic::Name("SOLVINDEN");
 	new Characteristic::Manufacturer("HomeSpan");
-	new Characteristic::SerialNumber("123-ABC");
-	new Characteristic::Model("NeoPixel RGB LEDs");
+	new Characteristic::SerialNumber(sNumber);
+	new Characteristic::Model("NeoPixel RGB/RGBW LEDs");
 	new Characteristic::FirmwareRevision("1.0");
 	new Characteristic::Identify();
 
