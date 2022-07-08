@@ -87,6 +87,11 @@ The device can also be controlled by the FLASH button on the board. More on [Hom
 5. Go to your Home app and select "Add Accessory"
 6. Select "More Options" and you should see your LED Controller there.
 
+## Todo
+
+- [ ] Add physical button to control the device
+- [ ] Add level shifter to the PCB for 5V on the data line for RGBW leds  
+
 ## References and sources
 
 - @HomeSpan for ESP32 HomeKit firmware [GitHub link](https://github.com/HomeSpan/HomeSpan)
