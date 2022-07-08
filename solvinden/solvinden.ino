@@ -49,47 +49,47 @@
  *              ╚═════════════════════════════╝
  */
 
-float angle		  = 0;
-long  count_wheel = 0;
+float angle = 0;
 
-#define MAXHUE	 360
-#define REQUIRED VERSION(1, 5, 0)
-// #define RELAY
+#define REQUIRED VERSION(1, 5, 0) // Required HomeSpan version
+#define RGBW	 true			  // true = RGBW, false = RGB
 
 #include "HomeSpan.h"
-#include "extras/Pixel.h" // include the HomeSpan Pixel class
-#include <ESPAsyncWebServer.h>
+#include "extras/Pixel.h"
 #include <AsyncElegantOTA.h>
+#include <ESPAsyncWebServer.h>
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
 
-#define NEOPIXEL_RGBW_PIN 17
+#if RGBW
+// Data from gpio 16 is going through the level shifter to increase the control voltage to 5V
+#define NEOPIXEL_PIN 16
+#else
+// Data from gpio 17 is directly connected to the neopixel, fine for RGB strips
+#define NEOPIXEL_PIN 17
+#endif
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
 
-#define NEOPIXEL_RGBW_PIN 38
+#define NEOPIXEL_PIN 38
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
 
-#define NEOPIXEL_RGBW_PIN 2
+#define NEOPIXEL_PIN 2
 
 #endif
 
-void addSwitch();
-
 // clang-format off
-CUSTOM_CHAR(Selector, 00000001-0001-0001-0001-46637266EA00, PR + PW + EV, UINT8, 1, 1, 3, false); // create Custom Characteristic to "select" special effects via Eve App
+CUSTOM_CHAR(RainbowEnabled, 00000001-0001-0001-0001-46637266EA00, PR + PW + EV, BOOL, 0, 0, 1, false);
 // clang-format on
 
-// declare function
-int *Wheel(byte WheelPos);
-///////////////////////////////
 AsyncWebServer server(80);
+
 struct Pixel_Strand : Service::LightBulb { // Addressable RGBW Pixel Strand of nPixel Pixels
 
 	struct SpecialEffect {
 		Pixel_Strand *px;
-		const char   *name;
+		const char	 *name;
 
 		SpecialEffect(Pixel_Strand *px, const char *name) {
 			this->px   = px;
@@ -102,31 +102,29 @@ struct Pixel_Strand : Service::LightBulb { // Addressable RGBW Pixel Strand of n
 		virtual int		 requiredBuffer() { return (0); }
 	};
 
-	Characteristic::On		   power{0, true};
-	Characteristic::Hue		   H{0, true};
-	Characteristic::Saturation S{100, true};
-	Characteristic::Brightness V{100, true};
-	Characteristic::Selector   effect{1, true};
+	Characteristic::On			   power{0, true};
+	Characteristic::Hue			   H{0, true};
+	Characteristic::Saturation	   S{100, true};
+	Characteristic::Brightness	   V{100, true};
+	Characteristic::RainbowEnabled rainbow{false, true};
 
 	vector<SpecialEffect *> Effects;
 
-	Pixel		  *pixel;
+	Pixel		 *pixel;
 	int			  nPixels;
 	Pixel::Color *colors;
 	uint32_t	  alarmTime;
 
 	Pixel_Strand(int pin, int nPixels) : Service::LightBulb() {
 
-		pixel		  = new Pixel(pin, false); // creates RGBW pixel LED on specified pin using default timing parameters suitable for most SK68xx LEDs
-		this->nPixels = nPixels;			   // store number of Pixels in Strand
+		pixel		  = new Pixel(pin, RGBW); // creates RGB/RGBW pixel LED on specified pin using default timing parameters suitable for most SK68xx LEDs
+		this->nPixels = nPixels;			  // store number of Pixels in Strand
 
 		Effects.push_back(new ManualControl(this));
 		Effects.push_back(new Rainbow(this));
-		Effects.push_back(new Colorwheel(this));
 
-		effect.setUnit(""); // configures custom "Selector" characteristic for use with Eve HomeKit
-		effect.setDescription("Color Effect");
-		effect.setRange(1, Effects.size(), 1);
+		rainbow.setUnit(""); // configures custom "RainbowEnabled" characteristic for use with Eve HomeKit
+		rainbow.setDescription("Rainbow Animation");
 
 		V.setRange(5, 100, 1); // sets the range of the Brightness to be from a min of 5%, to a max of 100%, in steps of 1%
 
@@ -146,20 +144,26 @@ struct Pixel_Strand : Service::LightBulb { // Addressable RGBW Pixel Strand of n
 
 		if (!power.getNewVal()) {
 			pixel->set(Pixel::Color().RGB(0, 0, 0, 0), this->nPixels);
+		} else if (!rainbow.getNewVal()) {
+			Effects[0]->init();
+			if (rainbow.updated())
+				Serial.printf("Effect changed to: %s\n", Effects[0]->name);
 		} else {
-			Effects[effect.getNewVal() - 1]->init();
-			alarmTime = millis() + Effects[effect.getNewVal() - 1]->update();
-			if (effect.updated())
-				Serial.printf("Effect changed to: %s\n", Effects[effect.getNewVal() - 1]->name);
+			Effects[1]->init();
+			alarmTime = millis() + Effects[1]->update();
+			if (rainbow.updated())
+				Serial.printf("Effect changed to: %s\n", Effects[1]->name);
 		}
-
 		return (true);
 	}
 
-	void loop() override {
+	void
+	loop() override {
 
 		if (millis() > alarmTime && power.getVal())
-			alarmTime = millis() + Effects[effect.getNewVal() - 1]->update();
+			if (rainbow.getVal()) {
+				alarmTime = millis() + Effects[1]->update();
+			}
 	}
 
 	//////////////
@@ -168,7 +172,25 @@ struct Pixel_Strand : Service::LightBulb { // Addressable RGBW Pixel Strand of n
 
 		ManualControl(Pixel_Strand *px) : SpecialEffect{px, "Manual Control"} {}
 
-		void init() override { px->pixel->set(Pixel::Color().HSV(px->H.getNewVal<float>(), px->S.getNewVal<float>(), px->V.getNewVal<float>()), px->nPixels); }
+		void init() override {
+
+			float h = px->H.getNewVal();
+			float s = px->S.getNewVal();
+			float v = px->V.getNewVal();
+
+#if RGBW
+			if (h == 30) {
+				px->pixel->set(
+					Pixel::Color().HSV(h, s, 0, v), px->nPixels);
+			} else {
+				px->pixel->set(
+					Pixel::Color().HSV(h, s, v), px->nPixels);
+			}
+#else
+			px->pixel->set(
+				Pixel::Color().HSV(h, s, v), px->nPixels);
+#endif
+		}
 	};
 
 	//////////////
@@ -200,36 +222,6 @@ struct Pixel_Strand : Service::LightBulb { // Addressable RGBW Pixel Strand of n
 
 		int requiredBuffer() override { return (px->nPixels); }
 	};
-
-	///////////////////////////////
-	struct Colorwheel : SpecialEffect {
-
-		int8_t *dir;
-
-		Colorwheel(Pixel_Strand *px) : SpecialEffect{px, "Colorwheel"} {
-			dir = (int8_t *)calloc(px->nPixels, sizeof(int8_t));
-		}
-
-		void init() override {
-			for (int i = 0; i < px->nPixels; i++) {
-				px->colors[i].RGB(0, 0, 0, 0);
-				dir[i] = 0;
-			}
-		}
-
-		uint32_t update() override {
-			float value = px->V.getNewVal<float>();
-			for (int i = 0; i < px->nPixels; i++) {
-				px->colors[i] = Pixel::Color().HSV(i * (MAXHUE / px->nPixels) + count_wheel, 100, value);
-			}
-			px->pixel->set(px->colors, px->nPixels);
-			count_wheel++;
-			return (200);
-		}
-
-		int requiredBuffer() override { return (px->nPixels); }
-	};
-	///////////////////////////////
 };
 
 struct DEV_Switch : Service::Switch {
@@ -260,6 +252,7 @@ void setup() {
 
 	Serial.begin(115200);
 
+	homeSpan.setSketchVersion("1.0.0");	  // set sketch version
 	homeSpan.setLogLevel(0);			  // set log level to 0 (no logs)
 	homeSpan.setStatusPin(32);			  // set the status pin to GPIO32
 	homeSpan.setStatusAutoOff(10);		  // disable led after 10 seconds
@@ -267,7 +260,7 @@ void setup() {
 	homeSpan.reserveSocketConnections(5); // reserve 5 socket connections for Web Server
 	homeSpan.setControlPin(0);			  // set the control pin to GPIO0
 	homeSpan.setPortNum(81);			  // set the port number to 81
-	// homeSpan.enableAutoStartAP();		  // enable auto start of AP
+	homeSpan.enableAutoStartAP();		  // enable auto start of AP
 
 	homeSpan.begin(Category::Lighting, "SOLVINDEN");
 
@@ -283,7 +276,7 @@ void setup() {
 	new Service::HAPProtocolInformation();
 	new Characteristic::Version("1.1.0");
 
-	new Pixel_Strand(NEOPIXEL_RGBW_PIN, 9);
+	new Pixel_Strand(NEOPIXEL_PIN, 9);
 }
 
 ///////////////////////////////
