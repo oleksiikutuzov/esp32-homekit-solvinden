@@ -64,14 +64,11 @@ Furthermore, you will also need to install the following libraries using the Lib
 
 And some libraries manually:
 
-1. Go to this GitHub repo and download it as a ZIP - [AsyncElegantOTA](https://github.com/ayushsharma82/AsyncElegantOTA)
+1. Go to this GitHub repo and download it as a ZIP - [ElegantOTA](https://github.com/ayushsharma82/ElegantOTA)
 2. In Arduino IDE select "Sketch" -> "Include Library" and "Add .ZIP Library..." and select downloaded ZIP
-3. Do previous steps to the following libraries: 
-   * [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
-   * [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
-4. Download and open this repository in Arduino IDE (or VSCode with Arduino extension)
-5. Set the upload speed to 115200
-6. Build, flash, and you're done
+3. Download and open this repository in Arduino IDE (or VSCode with Arduino extension)
+4. Set the upload speed to 115200
+5. Build, flash, and you're done
 
 Instead of Arduino IDE OTA, the webserver update was implemented. You can flash binary at `http://[DEVICE IP]/update`.
 There is a reboot link. Opening `http://[DEVICE IP]/reboot` will force the device to reboot. 
