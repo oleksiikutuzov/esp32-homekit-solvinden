@@ -42,8 +42,8 @@
  *      RED_LED ║IO32                     IO19║
  *              ║IO33                     IO18║ RELAY
  *              ║IO25                      IO5║
- *              ║IO26                     IO17║ NEOPIXEL
- *              ║IO27                     IO16║
+ *              ║IO26                     IO17║ NEOPIXEL_RGB
+ *              ║IO27                     IO16║ NEOPIXEL_RGBW
  *              ║IO14                      IO4║
  *              ║IO12                      IO0║ +++, BUTTON
  *              ╚═════════════════════════════╝
@@ -51,13 +51,16 @@
 
 float angle = 0;
 
-#define REQUIRED VERSION(1, 5, 0) // Required HomeSpan version
-#define RGBW	 false			  // true = RGBW, false = RGB
+#define REQUIRED VERSION(1, 5, 1) // Required HomeSpan version
+#define RGBW	 true			  // true = RGBW, false = RGB
 
 #include "HomeSpan.h"
 #include "extras/Pixel.h"
-#include <AsyncElegantOTA.h>
-#include <ESPAsyncWebServer.h>
+#include <WiFiClient.h>
+#include <WebServer.h>
+#include <ElegantOTA.h>
+
+// TODO RGB/RGBW as a custom characteristic
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
 
@@ -83,7 +86,7 @@ float angle = 0;
 CUSTOM_CHAR(RainbowEnabled, 00000001-0001-0001-0001-46637266EA00, PR + PW + EV, BOOL, 0, 0, 1, false);
 // clang-format on
 
-AsyncWebServer server(80);
+WebServer server(80);
 
 char sNumber[18] = "11:11:11:11:11:11";
 
@@ -260,15 +263,16 @@ void setup() {
 	}
 	sNumber[17] = '\0'; // the last charater needs to be a null
 
-	homeSpan.setSketchVersion("1.0.0");	  // set sketch version
-	homeSpan.setLogLevel(0);			  // set log level to 0 (no logs)
-	homeSpan.setStatusPin(32);			  // set the status pin to GPIO32
-	homeSpan.setStatusAutoOff(10);		  // disable led after 10 seconds
-	homeSpan.setWifiCallback(setupWeb);	  // Set the callback function for wifi events
-	homeSpan.reserveSocketConnections(5); // reserve 5 socket connections for Web Server
-	homeSpan.setControlPin(0);			  // set the control pin to GPIO0
-	homeSpan.setPortNum(81);			  // set the port number to 81
-	homeSpan.enableAutoStartAP();		  // enable auto start of AP
+	homeSpan.setSketchVersion("1.0.0");								// set sketch version
+	homeSpan.setLogLevel(0);										// set log level to 0 (no logs)
+	homeSpan.setStatusPin(32);										// set the status pin to GPIO32
+	homeSpan.setStatusAutoOff(10);									// disable led after 10 seconds
+	homeSpan.setWifiCallback(setupWeb);								// Set the callback function for wifi events
+	homeSpan.reserveSocketConnections(5);							// reserve 5 socket connections for Web Server
+	homeSpan.setControlPin(0);										// set the control pin to GPIO0
+	homeSpan.setPortNum(88);										// set the port number to 81
+	homeSpan.enableAutoStartAP();									// enable auto start of AP
+	homeSpan.enableWebLog(10, "pool.ntp.org", "UTC-2:00", "myLog"); // enable Web Log
 
 	homeSpan.begin(Category::Lighting, "SOLVINDEN");
 
@@ -278,7 +282,7 @@ void setup() {
 	new Characteristic::Manufacturer("HomeSpan");
 	new Characteristic::SerialNumber(sNumber);
 	new Characteristic::Model("NeoPixel RGB/RGBW LEDs");
-	new Characteristic::FirmwareRevision("1.0");
+	new Characteristic::FirmwareRevision("1.1");
 	new Characteristic::Identify();
 
 	new Service::HAPProtocolInformation();
@@ -296,15 +300,26 @@ void loop() {
 ///////////////////////////////
 
 void setupWeb() {
-	server.on("/reboot", HTTP_GET, [](AsyncWebServerRequest *request) {
+	server.on("/metrics", HTTP_GET, []() {
+		double uptime		= esp_timer_get_time() / (6 * 10e6);
+		double heap			= esp_get_free_heap_size();
+		String uptimeMetric = "# HELP uptime Solvinden uptime\nhomekit_uptime{device=\"solvinden\",location=\"home\"} " + String(int(uptime));
+		String heapMetric	= "# HELP heap Available heap memory\nhomekit_heap{device=\"solvinden\",location=\"home\"} " + String(int(heap));
+
+		Serial.println(uptimeMetric);
+		Serial.println(heapMetric);
+		server.send(200, "text/plain", uptimeMetric + "\n" + heapMetric);
+	});
+
+	server.on("/reboot", HTTP_GET, []() {
 		String content = "<html><body>Rebooting!  Will return to configuration page in 10 seconds.<br><br>";
 		content += "<meta http-equiv = \"refresh\" content = \"10; url = /\" />";
-		request->send(200, "text/html", content);
+		server.send(200, "text/html", content);
 
 		ESP.restart();
 	});
 
-	AsyncElegantOTA.begin(&server); // Start AsyncElegantOTA
+	ElegantOTA.begin(&server); // Start ElegantOTA
 	server.begin();
 	LOG1("HTTP server started");
 } // setupWeb
