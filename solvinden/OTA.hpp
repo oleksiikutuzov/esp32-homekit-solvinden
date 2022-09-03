@@ -5,10 +5,17 @@
 #include "cert.hpp"
 #include <HomeSpan.h>
 
-#define URL_fw_Version "https://github.com/oleksiikutuzov/esp32-homekit-solvinden/blob/main/bin_version.txt"
-#define URL_fw_Bin	   "https://github.com/oleksiikutuzov/esp32-homekit-solvinden/blob/main/esp32_solvinden.bin"
-
 #define FW_VERSION	   "1.2.0"
+#define RGBW		   false // true = RGBW, false = RGB
+
+#define URL_fw_Version "https://github.com/oleksiikutuzov/esp32-homekit-solvinden/blob/main/bin_version.txt"
+
+#if RGBW
+#define URL_fw_Bin "https://github.com/oleksiikutuzov/esp32-homekit-solvinden/blob/main/esp32_solvinden_rgbw.bin"
+#else
+#define URL_fw_Bin "https://github.com/oleksiikutuzov/esp32-homekit-solvinden/blob/main/esp32_solvinden_rgb.bin"
+
+#endif
 
 String FirmwareVer = {
 	FW_VERSION};
