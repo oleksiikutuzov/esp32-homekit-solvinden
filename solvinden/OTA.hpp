@@ -6,7 +6,7 @@
 #include <HomeSpan.h>
 
 #define URL_fw_Version "https://github.com/oleksiikutuzov/esp32-homekit-solvinden/blob/main/bin_version.txt"
-#define URL_fw_Bin	   "https://github.com/oleksiikutuzov/esp32-homekit-solvinden/blob/main/esp32_led_strip.bin"
+#define URL_fw_Bin	   "https://github.com/oleksiikutuzov/esp32-homekit-solvinden/blob/main/esp32_solvinden.bin"
 
 #define FW_VERSION	   "1.2.0"
 
