@@ -51,7 +51,7 @@
 
 float angle = 0;
 
-#define REQUIRED VERSION(1, 5, 1) // Required HomeSpan version
+#define REQUIRED VERSION(1, 6, 0) // Required HomeSpan version
 
 #include "HomeSpan.h"
 #include "extras/Pixel.h"
@@ -59,8 +59,6 @@ float angle = 0;
 #include <WebServer.h>
 #include <ElegantOTA.h>
 #include "OTA.hpp"
-
-// TODO RGB/RGBW as a custom characteristic
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
 
