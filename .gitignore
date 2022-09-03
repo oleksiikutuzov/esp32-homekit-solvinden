@@ -1,4 +1,4 @@
 .DS_Store
 build/
-*.bin
+esp32_solvinden_*.bin
 *.code-workspace
