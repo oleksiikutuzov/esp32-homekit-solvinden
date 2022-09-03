@@ -52,7 +52,6 @@
 float angle = 0;
 
 #define REQUIRED VERSION(1, 5, 1) // Required HomeSpan version
-#define RGBW	 true			  // true = RGBW, false = RGB
 
 #include "HomeSpan.h"
 #include "extras/Pixel.h"
@@ -261,10 +260,18 @@ void setup() {
 	Serial.print("Active firmware version: ");
 	Serial.println(FirmwareVer);
 
+	String mode;
+#if RGBW
+	mode = "-RGBW ";
+#else
+	mode = "-RGB ";
+#endif
+
 	String	   temp			  = FW_VERSION;
 	const char compile_date[] = __DATE__ " " __TIME__;
 	char	  *fw_ver		  = new char[temp.length() + 30];
 	strcpy(fw_ver, temp.c_str());
+	strcat(fw_ver, mode.c_str());
 	strcat(fw_ver, " (");
 	strcat(fw_ver, compile_date);
 	strcat(fw_ver, ")");
@@ -294,7 +301,11 @@ void setup() {
 	new Characteristic::Name("SOLVINDEN");
 	new Characteristic::Manufacturer("HomeSpan");
 	new Characteristic::SerialNumber(sNumber);
-	new Characteristic::Model("NeoPixel RGB/RGBW LEDs");
+#if RGBW
+	new Characteristic::Model("NeoPixel RGBW LEDs");
+#else
+	new Characteristic::Model("NeoPixel RGB LEDs");
+#endif
 	new Characteristic::FirmwareRevision(temp.c_str());
 	new Characteristic::Identify();
 
