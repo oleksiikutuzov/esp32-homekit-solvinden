@@ -5,8 +5,8 @@
 #include "cert.hpp"
 #include <HomeSpan.h>
 
-#define FW_VERSION	   "1.2.1"
-#define RGBW		   true // true = RGBW, false = RGB
+#define FW_VERSION	   "1.2.2"
+#define RGBW		   false // true = RGBW, false = RGB
 
 #define URL_fw_Version "https://raw.githubusercontent.com/oleksiikutuzov/esp32-homekit-solvinden/main/bin_version.txt"
 
@@ -22,8 +22,8 @@ String FirmwareVer = {
 void firmwareUpdate();
 int	 FirmwareVersionCheck();
 
-unsigned long previousMillis = 0; // will store last time LED was updated
-const long	  interval		 = 60000;
+unsigned long previousMillis = 0;			   // will store last time LED was updated
+const long	  interval		 = 60 * 60 * 1000; // 1 hour in ms
 
 void repeatedCall() {
 	static int	  num			= 0;
