@@ -3,7 +3,9 @@ name: PlatformIO Build
 on: [push, pull_request]
 
 jobs:
-  build:
+  build_rgb:
+  
+    name: Build RGB
 
     runs-on: ubuntu-latest
 
@@ -28,4 +30,34 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade platformio
     - name: Run PlatformIO
-      run: pio run -e esp32dev_rgb -e esp32dev_rgbw
+      run: pio run -e esp32dev_rgb
+
+  build_rgbw:
+
+    name: Build RGBW
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Cache PlatformIO
+      uses: actions/cache@v2
+      with:
+        path: ~/.platformio
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+    - name: Set up Python
+      uses: actions/setup-python@v2
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade platformio
+    - name: Run PlatformIO
+      run: pio run -e esp32dev_rgbw
+
