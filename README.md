@@ -1,6 +1,8 @@
 # esp32-homekit-led-strip
 Native Apple HomeKit via an ESP32 for the IKEA SOLVINDEN lamp
 
+[![PlatformIO Build](https://github.com/oleksiikutuzov/esp32-homekit-solvinden/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/oleksiikutuzov/esp32-homekit-solvinden/actions/workflows/build.yml)
+
 Software is based on the [HomeSpan](https://github.com/HomeSpan/HomeSpan) library. Supports RGB or RGBW Neopixel LEDs.
 
 _As usual, don't expect any warranties. I am just a hobbyist, not a professional. It works for me, but you take your own risk using it. I am not liable for any damage to your devices._
