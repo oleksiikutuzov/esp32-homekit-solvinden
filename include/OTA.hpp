@@ -5,8 +5,8 @@
 #include "cert.hpp"
 #include <HomeSpan.h>
 
-#define FW_VERSION	   "1.2.3"
-// #define RGBW		   // defined = RGBW, not defined = RGB
+#define FW_VERSION	   "1.2.4"
+// #define RGBW		   // defined = RGBW, not defined = RGB: defined in platformio.ini
 
 #define URL_fw_Version "https://raw.githubusercontent.com/oleksiikutuzov/esp32-homekit-solvinden/main/bin_version.txt"
 
