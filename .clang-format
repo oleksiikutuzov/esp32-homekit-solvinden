@@ -1,19 +1,61 @@
-{   
-    BasedOnStyle: LLVM, 
-    UseTab: Always, 
-    IndentWidth: 4, 
-    TabWidth: 4, 
-    BreakBeforeBraces: Attach, 
-    AllowShortIfStatementsOnASingleLine: true, 
-    IndentCaseLabels: false, 
-    ColumnLimit: 0, 
-    AccessModifierOffset: -4, 
-    NamespaceIndentation: All, 
-    FixNamespaceComments: false,
-    AlignArrayOfStructures: Left,
-    AlignConsecutiveMacros: AcrossEmptyLinesAndComments,
-    AlignConsecutiveAssignments: Consecutive,
-    AlignConsecutiveDeclarations: Consecutive,
-    AlignTrailingComments: true,
-    AllowShortBlocksOnASingleLine: Always,
-}
+BasedOnStyle: LLVM
+AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
+AlignArrayOfStructures: Left
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AlignConsecutiveDeclarations: Consecutive
+AlignEscapedNewlines: Right
+AlignOperands: AlignAfterOperator
+AlignTrailingComments: true
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+BinPackArguments: false
+BinPackParameters: false
+BitFieldColonSpacing: Both
+BreakBeforeBraces: Attach
+BreakStringLiterals: true
+ColumnLimit: 0
+CompactNamespaces: false
+Cpp11BracedListStyle: true
+DeriveLineEnding: true
+EmptyLineBeforeAccessModifier: Always
+FixNamespaceComments: true
+IncludeBlocks: Preserve
+IndentCaseBlocks: false
+IndentCaseLabels: true
+IndentExternBlock: Indent
+IndentPPDirectives: BeforeHash
+IndentWidth: 4
+IndentWrappedFunctionNames: true
+KeepEmptyLinesAtTheStartOfBlocks: true
+Language: Cpp
+NamespaceIndentation: All
+PPIndentWidth: -1
+PackConstructorInitializers: NextLine
+PointerAlignment: Right
+QualifierAlignment: Leave
+ReferenceAlignment: Right
+ReflowComments: true
+SortIncludes: CaseSensitive
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: false
+SpaceAroundPointerQualifiers: Default
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+Standard: Latest
+TabWidth: 4
+UseTab: ForIndentation

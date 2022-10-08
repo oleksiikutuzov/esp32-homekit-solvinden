@@ -1,33 +1,40 @@
-#include <WiFi.h>
+#include "cert.hpp"
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
-#include <WiFiClientSecure.h>
-#include "cert.hpp"
 #include <HomeSpan.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
 
-#define FW_VERSION	   "1.2.4"
+#define FW_VERSION "1.2.4"
 // #define RGBW		   // defined = RGBW, not defined = RGB: defined in platformio.ini
+
+#ifndef MODE
+	#define MODE 0
+#endif
 
 #define URL_fw_Version "https://raw.githubusercontent.com/oleksiikutuzov/esp32-homekit-solvinden/main/bin_version.txt"
 
-#if RGBW
-#define URL_fw_Bin "https://raw.githubusercontent.com/oleksiikutuzov/esp32-homekit-solvinden/main/esp32_solvinden_rgbw.bin"
-#else
-#define URL_fw_Bin "https://raw.githubusercontent.com/oleksiikutuzov/esp32-homekit-solvinden/main/esp32_solvinden_rgb.bin"
+#if MODE == 0
+	#define URL_fw_Bin "https://raw.githubusercontent.com/oleksiikutuzov/esp32-homekit-solvinden/main/esp32_solvinden_rgbw.bin"
+#elif MODE == 1
+	#define URL_fw_Bin "https://raw.githubusercontent.com/oleksiikutuzov/esp32-homekit-solvinden/main/esp32_solvinden_rgb.bin"
+#elif MODE == 2
+	#define URL_fw_Bin "https://raw.githubusercontent.com/oleksiikutuzov/esp32-homekit-solvinden/main/esp32_solvinden_white.bin"
+
 #endif
 
-String fw_ver	   = FW_VERSION;
+String fw_ver      = FW_VERSION;
 String FirmwareVer = {
-	fw_ver};
+    fw_ver};
 
 void firmwareUpdate();
-int	 FirmwareVersionCheck();
+int  FirmwareVersionCheck();
 
-unsigned long previousMillis = 0;			   // will store last time LED was updated
-const long	  interval		 = 60 * 60 * 1000; // 1 hour in ms
+unsigned long previousMillis = 0;              // will store last time LED was updated
+const long    interval       = 60 * 60 * 1000; // 1 hour in ms
 
 void repeatedCall() {
-	static int	  num			= 0;
+	static int    num           = 0;
 	unsigned long currentMillis = millis();
 
 	if ((currentMillis - previousMillis) >= interval) {
@@ -45,23 +52,23 @@ void firmwareUpdate(void) {
 	t_httpUpdate_return ret = httpUpdate.update(client, URL_fw_Bin);
 
 	switch (ret) {
-	case HTTP_UPDATE_FAILED:
-		LOG1("HTTP_UPDATE_FAILED Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
-		break;
+		case HTTP_UPDATE_FAILED:
+			LOG1("HTTP_UPDATE_FAILED Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
+			break;
 
-	case HTTP_UPDATE_NO_UPDATES:
-		LOG1("HTTP_UPDATE_NO_UPDATES");
-		break;
+		case HTTP_UPDATE_NO_UPDATES:
+			LOG1("HTTP_UPDATE_NO_UPDATES");
+			break;
 
-	case HTTP_UPDATE_OK:
-		LOG1("HTTP_UPDATE_OK");
-		break;
+		case HTTP_UPDATE_OK:
+			LOG1("HTTP_UPDATE_OK");
+			break;
 	}
 }
 
 int FirmwareVersionCheck(void) {
 	String payload;
-	int	   httpCode;
+	int    httpCode;
 	String fwurl = "";
 	fwurl += URL_fw_Version;
 	fwurl += "?";
