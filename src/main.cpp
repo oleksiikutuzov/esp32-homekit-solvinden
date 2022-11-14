@@ -56,10 +56,9 @@ float angle = 0;
 
 #include "HomeSpan.h"
 #include "extras/Pixel.h"
-#include <WiFiClient.h>
-#include <WebServer.h>
 #include <ElegantOTA.h>
-#include "OTA.hpp"
+#include <WebServer.h>
+#include <WiFiClient.h>
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
 
