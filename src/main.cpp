@@ -51,7 +51,8 @@
 
 float angle = 0;
 
-#define REQUIRED VERSION(1, 6, 0) // Required HomeSpan version
+#define REQUIRED   VERSION(1, 7, 0) // Required HomeSpan version
+#define FW_VERSION "1.3.0"
 
 #include "HomeSpan.h"
 #include "extras/Pixel.h"
@@ -258,7 +259,7 @@ void setup() {
 	Serial.begin(115200);
 
 	Serial.print("Active firmware version: ");
-	Serial.println(FirmwareVer);
+	Serial.println(FW_VERSION);
 
 	String mode;
 #if RGBW
@@ -320,7 +321,6 @@ void setup() {
 void loop() {
 	homeSpan.poll();
 	server.handleClient();
-	repeatedCall();
 }
 
 ///////////////////////////////
